@@ -5,7 +5,7 @@
 <meta name="description" content="卐 HITLER NAZI EQUALIZER 卐">
 <meta property="og:type" content="website">
 <meta property="og:title" content="nazqualizer">
-<meta property="og:description" content="b卐 HITLER NAZI EQUALIZER 卐">
+<meta property="og:description" content="卐 HITLER NAZI EQUALIZER 卐">
 <meta property="og:image" content="https://nazqualizer.vercel.app/preview.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#ff7a00">
@@ -83,7 +83,7 @@ input.r::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;back
 <body class="empty">
 <div class="main">
   <div class="side">
-    <div class="tb"><button class="soft" id="back" title="Back" aria-label="Back" style="display:none;padding:8px 10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"/></svg></button><button class="soft" id="add">+ Add files</button><button class="soft" id="addpl">+ Add playlist</button><button id="clear">≡ Clear</button><span class="split"><button class="dlb">Download</button><button class="car">▾</button><div class="menu"><button class="dlb">WAV (lossless)</button></div></span></div>
+    <div class="tb"><button class="soft" id="back" title="Back" aria-label="Back" style="display:none;padding:8px 10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M15 5l-7 7 7 7"/></svg></button><button class="soft" id="add">+ Add files</button><button class="soft" id="addpl">+ Add playlist</button><button id="clear">≡ Clear</button><span class="split"><button class="dlb" data-fmt="wav">Download</button><button class="car">▾</button><div class="menu"><button class="dlb" data-fmt="wav">WAV (lossless)</button><button class="dlb" data-fmt="mp3">MP3 (192 kbps)</button></div></span></div>
     <div id="list"></div>
     <canvas id="viz"></canvas>
   </div>
@@ -111,7 +111,9 @@ const S={root:null,cur:null,path:[],tracks:[],i:-1,speed:1,pitchOn:false,pitch:1
 const audio=new Audio();audio.preservesPitch=audio.mozPreservesPitch=audio.webkitPreservesPitch=false;
 let fx=null,master=null,started=false,peaks=[];
 const fmt=t=>{t=Math.max(0,t|0);return(t/60|0)+":"+String(t%60).padStart(2,"0")};
-const toast=m=>$("#status").textContent=m;
+let toastT=[];
+const toast=(m,keep=false)=>{const e=$("#status");toastT.forEach(clearTimeout);toastT=[];e.style.transition="opacity .4s";e.style.opacity=1;e.textContent=m;
+  if(m&&!keep){toastT=[setTimeout(()=>{e.style.opacity=0},2600),setTimeout(()=>{e.textContent="";e.style.opacity=1},3000)]}};
 const setP=i=>i.style.setProperty("--p",((i.value-i.min)/(i.max-i.min)*100)+"%");
 const f2=x=>+x.toFixed(2);
 let selTok=0,loadingWave=false;
@@ -295,7 +297,7 @@ async function mp3(ab){
 }
 async function download(fmt="wav"){
   if(S.i<0||!S.tracks[S.i].buf){toast("Load a file first (or wait for it to finish loading)");return}
-  const t=S.tracks[S.i],snap={...S};toast("Rendering… this can take a bit");
+  const t=S.tracks[S.i],snap={...S};toast("Rendering… this can take a bit",true);
   try{
     const dur=t.buf.duration/snap.speed+(snap.rev>0?4:0.5);
     const out=await Tone.Offline(()=>{
@@ -303,7 +305,7 @@ async function download(fmt="wav"){
       const p=new Tone.Player(t.buf);p.playbackRate=snap.speed;p.connect(f.input);f.output.toDestination();p.start(0);
     },dur,2,t.buf.sampleRate);
     let blob;
-    if(fmt==="mp3"){toast("Encoding MP3…");blob=await mp3(out.get())}else blob=wav(out.get());
+    if(fmt==="mp3"){toast("Encoding MP3…",true);blob=await mp3(out.get())}else blob=wav(out.get());
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);a.download=t.file.name.replace(/\.[^.]+$/,"")+`-${snap.speed.toFixed(2)}x.${fmt==="mp3"?"mp3":"wav"}`;a.click();toast("");
   }catch(e){console.error(e);toast(fmt==="mp3"?"MP3 export failed (check your connection)":"Render failed")}
